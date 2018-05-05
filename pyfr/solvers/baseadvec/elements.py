@@ -90,6 +90,8 @@ class BaseAdvectionElements(BaseElements):
         if divfluxaa:
             plocqpts = self.ploc_at('qpts') if plocsrc else None
             solnqpts = self._scal_qpts_cpy if solnsrc else None
+            solnqpts = self._scal_qpts_cpy if solnsrc else None
+            dsqpts = self.ds_at('qpts')
 
             if solnsrc:
                 self.kernels['copy_soln'] = lambda: backend.kernel(
@@ -99,11 +101,13 @@ class BaseAdvectionElements(BaseElements):
             self.kernels['negdivconf'] = lambda: backend.kernel(
                 'negdivconf', tplargs=srctplargs,
                 dims=[self.nqpts, self.neles], tdivtconf=self._scal_qpts,
-                rcpdjac=self.rcpdjac_at('qpts'), ploc=plocqpts, u=solnqpts
+                rcpdjac=self.rcpdjac_at('qpts'), ploc=plocqpts, u=solnqpts,
+                ds=dsqpts
             )
         else:
             plocupts = self.ploc_at('upts') if plocsrc else None
             solnupts = self._scal_upts_cpy if solnsrc else None
+            dsupts = self.ds_at('upts')
 
             if solnsrc:
                 self.kernels['copy_soln'] = lambda: backend.kernel(
@@ -113,7 +117,8 @@ class BaseAdvectionElements(BaseElements):
             self.kernels['negdivconf'] = lambda: backend.kernel(
                 'negdivconf', tplargs=srctplargs,
                 dims=[self.nupts, self.neles], tdivtconf=self.scal_upts_outb,
-                rcpdjac=self.rcpdjac_at('upts'), ploc=plocupts, u=solnupts
+                rcpdjac=self.rcpdjac_at('upts'), ploc=plocupts, u=solnupts,
+                ds=dsupts
             )
 
         # In-place solution filter

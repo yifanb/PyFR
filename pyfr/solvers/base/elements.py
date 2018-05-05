@@ -7,8 +7,11 @@ import re
 import numpy as np
 
 from pyfr.nputil import npeval, fuzzysort
-from pyfr.util import lazyprop, memoize
+from pyfr.util import lazyprop, memoize, proxylist
 
+from pyfr.readers.table import TableReader
+
+from scipy.interpolate import griddata
 
 class BaseElements(object, metaclass=ABCMeta):
     privarmap = None
@@ -23,7 +26,7 @@ class BaseElements(object, metaclass=ABCMeta):
         self.nspts = nspts = eles.shape[0]
         self.neles = neles = eles.shape[1]
         self.ndims = ndims = eles.shape[2]
-
+        
         # Kernels we provide
         self.kernels = {}
 
@@ -360,3 +363,33 @@ class BaseElements(object, metaclass=ABCMeta):
     def get_ploc_for_inter(self, eidx, fidx):
         fpts_idx = self._srtd_face_fpts[fidx][eidx]
         return self.plocfpts[fpts_idx,eidx]
+
+    # get 2d discrete body force field 
+    # (temporary method, cannot handle mesh partition?; slow;) 
+    def _bf_2d(self, ptstype, source_file):
+        ds = TableReader(source_file)
+
+        points = np.array([ds.coord[:,0], ds.coord[:,1]]).swapaxes(0, 1)
+        
+        if ptstype in ['upts', 'qpts']:
+            coord = (self.ploc_at_np(ptstype)[:,0,:].flatten(),
+                    self.ploc_at_np(ptstype)[:,1,:].flatten())
+            return np.array([np.nan_to_num(griddata(points, ds.fb[:,0], coord)),
+                np.nan_to_num(griddata(points, ds.fb[:,1], coord))]).reshape((2,-1,self.neles)).swapaxes(0, 1)
+            #return np.zeros((self.nupts,2,self.neles))
+        else:
+            raise ValueError('points type doesn\'t exist!')
+
+
+    def ds_at(self, ptstype):
+        if ptstype == 'upts':
+            ds = np.zeros((self.nupts, self.nvars, self.neles))
+        if ptstype == 'qpts':
+            ds = np.zeros((self.nqpts, self.nvars, self.neles))
+
+        #2d body force
+        sourcefile = self.cfg.getpath('solver-source-file', 'body-force-2d','0')
+        if int(sourcefile):
+            ds[:,1:3,:] = self._bf_2d(ptstype, sourcefile) 
+
+        return self._be.const_matrix(ds, tags={'align'})

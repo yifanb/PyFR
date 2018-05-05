@@ -23,3 +23,8 @@ doc/build/
 
 # Hidden files
 .*
+
+*.vtu
+*.csv
+mStrip_fb
+*.sh

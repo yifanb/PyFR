@@ -7,8 +7,9 @@
               tdivtconf='inout fpdtype_t[${str(nvars)}]'
               ploc='in fpdtype_t[${str(ndims)}]'
               u='in fpdtype_t[${str(nvars)}]'
-              rcpdjac='in fpdtype_t'>
+              rcpdjac='in fpdtype_t'
+              ds='in fpdtype_t[${str(nvars)}]'>
 % for i, ex in enumerate(srcex):
-    tdivtconf[${i}] = -rcpdjac*tdivtconf[${i}] + ${ex};
+    tdivtconf[${i}] = -rcpdjac*tdivtconf[${i}] + ${ex} + ds[${i}];
 % endfor
 </%pyfr:kernel>
