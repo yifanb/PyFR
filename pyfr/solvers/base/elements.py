@@ -389,7 +389,7 @@ class BaseElements(object, metaclass=ABCMeta):
 
         #2d body force
         sourcefile = self.cfg.getpath('solver-source-file', 'body-force-2d','0')
-        if int(sourcefile):
+        if sourcefile != '0':
             ds[:,1:3,:] = self._bf_2d(ptstype, sourcefile) 
 
         return self._be.const_matrix(ds, tags={'align'})

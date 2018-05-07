@@ -74,7 +74,10 @@ class VTKWriter(BaseWriter):
         for fnames, vnames in visvarmap:
             ix = [privarmap.index(vn) for vn in vnames]
 
-            fields.append(vsoln[ix])
+            if self.ndims == 2 and fnames == 'velocity': 
+                fields.append(np.pad(vsoln[ix], [(0, 1), (0, 0), (0, 0)], 'constant'))
+            else:
+                fields.append(vsoln[ix])
 
         return fields
 
@@ -151,7 +154,10 @@ class VTKWriter(BaseWriter):
         for fname, varnames in vvars:
             names.append(fname.title())
             types.append(dtype)
-            comps.append(str(len(varnames)))
+            comp = str(len(varnames))
+            if self.ndims == 2 and fname == 'velocity':
+                comp = '3'
+            comps.append(comp)
 
         # If a mesh has been given the compute the sizes
         if mk:
@@ -159,7 +165,9 @@ class VTKWriter(BaseWriter):
             nb = npts*dsize
 
             sizes = [3*nb, 4*nnodes, 4*ncells, ncells]
-            sizes.extend(len(varnames)*nb for fname, varnames in vvars)
+            #sizes.extend(len(varnames)*nb for fname, varnames in vvars)
+            lens = [1, 3, 1]
+            sizes.extend(l*nb for l in lens)
 
             return names, types, comps, sizes
         else:

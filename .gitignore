@@ -26,5 +26,3 @@ doc/build/
 
 *.vtu
 *.csv
-mStrip_fb
-*.sh
